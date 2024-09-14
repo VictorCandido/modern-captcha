@@ -10,3 +10,12 @@ export async function listAuctionRooms() {
     }
 }
 
+export async function createAuctionRoom(nome: string) {
+    try {
+        const auctionRoom = await db.auctionRoom.create({ data: { nome } });
+        return auctionRoom;
+    } catch (error) {
+        console.log('Falha ao criar auctionRooms -', error);
+        throw error;
+    }
+}

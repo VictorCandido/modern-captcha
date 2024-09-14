@@ -4,6 +4,8 @@ import { db } from "./db";
 export const initialProfile = async () => {
     const profile = await currentUser();
 
+    console.log(JSON.stringify(profile, null, 2));
+
     if (!profile) {
         return auth().redirectToSignIn();
     }
@@ -22,7 +24,7 @@ export const initialProfile = async () => {
         data: {
             id: profile.id,
             nome: `${profile.firstName} ${profile.lastName}`,
-            username: String(profile.username),
+            username: String(profile?.username),
         }
     });
 
