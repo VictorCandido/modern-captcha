@@ -4,8 +4,11 @@ import { RefreshCw } from 'lucide-react';
 import { useState } from 'react';
 
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from '@/components/ui/label';
+import { Form } from '@/components/ui/form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+import CurrencyInput from './_components/currency-input';
 import Table from './_components/table';
 // import { ingressRoomIfNecessary } from '@/lib/bidding-setup';
 
@@ -15,26 +18,34 @@ interface Props {
     }
 }
 
+const formSchema = z.object({
+    newBid: z.number()
+})
+
 export default function BiddingInterface({ params }: Props) {
+    const form = useForm<z.infer<typeof formSchema>>({
+        resolver: zodResolver(formSchema),
+        defaultValues: {
+            newBid: 0,
+        }
+    });
+
     // ingressRoomIfNecessary(params.lanceId);
 
     const [currentBid, setCurrentBid] = useState(1250);
-    const [newBid, setNewBid] = useState('');
     const [myBids, setMyBids] = useState<Array<number>>([]);
     const [otherBids] = useState<Array<number>>([1450, 1350, 1250]);
 
-    const handleManualBid = () => {
-        if (newBid === '') {
+    const onSubmit = (values: z.infer<typeof formSchema>) => {
+        const { newBid } = values;
+
+        if (newBid === 0) {
             return
         }
 
         setMyBids([...myBids, Number(newBid)]);
         setCurrentBid(Number(newBid));
-        setNewBid('');
-    }
-
-    const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
+        form.setValue('newBid', 0);
     }
 
     return (
@@ -54,26 +65,25 @@ export default function BiddingInterface({ params }: Props) {
                         </Button>
                     </div>
 
-                    <form onSubmit={handleSubmit} className="space-y-2">
-                        <Label htmlFor="newBid">Novo Lance</Label>
-
-                        <div className="flex space-x-2">
-                            <Input
-                                type="text"
-                                placeholder="Digite seu lance"
-                                value={newBid}
-                                id='newBid'
-                                onChange={(e) => setNewBid(e.target.value)}
-                            />
+                    <Form {...form}>
+                        <form onSubmit={form.handleSubmit(onSubmit)} className="space-x-2 flex items-end">
+                            <div className='w-full'>
+                                <CurrencyInput
+                                    form={form}
+                                    label="Novo Lance"
+                                    name="newBid"
+                                    placeholder="Digite seu lance"
+                                />
+                            </div>
 
                             <Button
+                                type="submit"
                                 id='newBidButton'
-                                onClick={handleManualBid}
                             >
                                 Enviar Lance
                             </Button>
-                        </div>
-                    </form>
+                        </form>
+                    </Form>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <Table data={myBids} title="Meus Lances" />
