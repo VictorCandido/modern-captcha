@@ -1,50 +1,155 @@
-// import { Button } from "@/components/ui/button";
-// import { RefreshCw } from "lucide-react";
+'use client';
 
-// const AuctionRoomComponent = () => {
-//     return (
-//         <div className="p-6">
-//             <div className="space-y-6">
-//                 <div className="flex items-center justify-between">
-//                     <div>
-//                         <h2 className="text-lg font-medium">Último Lance</h2>
-//                         <p className="text-3xl font-bold">
-//                             {Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(currentBid)}
-//                         </p>
-//                     </div>
-//                     <Button variant="outline" size="icon">
-//                         <RefreshCw className="h-4 w-4" />
-//                     </Button>
-//                 </div>
+import ReCAPTCHA from 'react-google-recaptcha';
+import { RefreshCw } from 'lucide-react';
+import { useRef, useState } from 'react';
+import { toast } from "sonner"
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
 
-//                 <form onSubmit={handleSubmit} className="space-y-2">
-//                     <Label htmlFor="newBid">Novo Lance</Label>
+import { Button } from "@/components/ui/button";
+import { Form, FormControl, FormField, FormItem, FormLabel } from '@/components/ui/form';
+import CurrencyInput from './currency-input';
+import Table from './table';
+import InvisibleReCAPTCHA from './InvisibleReCAPTCHA';
 
-//                     <div className="flex space-x-2">
-//                         <Input
-//                             type="text"
-//                             placeholder="Digite seu lance"
-//                             value={newBid}
-//                             id='newBid'
-//                             onChange={(e) => setNewBid(e.target.value)}
-//                         />
+interface Props {
+    roomId: string;
+}
 
-//                         <Button
-//                             id='newBidButton'
-//                             onClick={handleManualBid}
-//                         >
-//                             Enviar Lance
-//                         </Button>
-//                     </div>
-//                 </form>
+const formSchema = z.object({
+    newBid: z.string()
+})
 
-//                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-//                     <Table data={myBids} title="Meus Lances" />
-//                     <Table data={otherBids} title="Outros Lances" />
-//                 </div>
-//             </div>
-//         </div>
-//     );
-// }
+export default function AuctionRoom({ roomId }: Props) {
+    const form = useForm<z.infer<typeof formSchema>>({
+        resolver: zodResolver(formSchema),
+        defaultValues: {
+            newBid: '',
+        }
+    });
 
-// export default AuctionRoomComponent;
+    const [currentBid, setCurrentBid] = useState(1250);
+    const [myBids, setMyBids] = useState<Array<number>>([]);
+    const [otherBids] = useState<Array<number>>([1450, 1350, 1250]);
+    const [recaptchaToken, setRecaptchaToken] = useState('');
+
+    const fromRef = useRef<any>()
+
+    const onSubmit = async (values: z.infer<typeof formSchema>) => {
+        try {
+            const { newBid } = values;
+
+            if (newBid === '') {
+                return
+            }
+
+            if (recaptchaToken === '') {
+                return
+            }
+
+            await createBid(roomId, Number(unmaskCurrency(newBid)), String(recaptchaToken));
+
+            setMyBids([...myBids, Number(unmaskCurrency(newBid))]);
+            setCurrentBid(Number(unmaskCurrency(newBid)));
+            form.setValue('newBid', '');
+        } catch (error) {
+            console.log(error);
+            toast.error(String(error));
+        }
+    }
+
+    async function createBid(roomId: string, amount: number, token: string) {
+        try {
+            const response = await fetch(`/api/bid`, {
+                method: 'POST',
+                body: JSON.stringify({ roomId, amount, token }),
+            });
+
+            if (response.status !== 200) {
+                throw new Error(await response.text());
+            }
+
+            console.log(JSON.stringify(await response.json(), null, 2));
+        } catch (error) {
+            throw error;
+        }
+    }
+
+    function unmaskCurrency(value: string) {
+        value = value.replaceAll('R$', '').trim();
+        value = value.replaceAll('.', '');
+        value = value.replaceAll(',', '.');
+        return value;
+    }
+
+    const handleRecaptchaResolved = async (token: any) => {
+        setRecaptchaToken(token);
+
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+
+        fromRef.current.requestSubmit();
+    };
+
+    return (
+        <div className="w-full h-full m-10">
+            <div className="p-6">
+                <div className="space-y-6">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <h2 className="text-lg font-medium">Último Lance</h2>
+                            <p className="text-3xl font-bold">
+                                {Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(currentBid)}
+                            </p>
+                        </div>
+                        <Button variant="outline" size="icon">
+                            <RefreshCw className="h-4 w-4" />
+                        </Button>
+                    </div>
+
+                    <Form {...form}>
+                        <form ref={fromRef} onSubmit={form.handleSubmit(onSubmit)} className="space-x-2 flex items-end">
+                            <div className='w-full'>
+                                <FormField
+                                    control={form.control}
+                                    name='newBid'
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Novo Lance</FormLabel>
+                                            <FormControl>
+                                                <CurrencyInput
+                                                    field={field}
+                                                />
+                                            </FormControl>
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
+
+                            <InvisibleReCAPTCHA onResolved={handleRecaptchaResolved} />
+
+                            {/* <Button
+                                type="submit"
+                                id='newBidButton'
+                            // className="g-recaptcha" data-sitekey="6LdB3T0qAAAAAJCXAh8guDdIMLQVZMh9PKtBq-mr"
+                            >
+                                Enviar Lance
+                            </Button>
+
+                            <ReCAPTCHA
+                                sitekey="6LdB3T0qAAAAAJCXAh8guDdIMLQVZMh9PKtBq-mr" // substitua pela sua site key
+                                size="invisible"
+                            /> */}
+                        </form>
+                    </Form>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <Table data={myBids} title="Meus Lances" />
+                        <Table data={otherBids} title="Outros Lances" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    )
+}

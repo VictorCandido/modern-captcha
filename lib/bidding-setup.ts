@@ -1,10 +1,12 @@
+'use service'
+
 import { currentProfile } from "./current-profile";
 import { db } from "./db";
 
 export async function ingressRoomIfNecessary(roomId: string) {
     const user = await currentProfile();
 
-    if (!user) return false;
+    if (!user) return;
 
     const room = await db.auctionRoom.findUnique({
         where: {
@@ -17,15 +19,49 @@ export async function ingressRoomIfNecessary(roomId: string) {
         }
     });
 
-    if (room) return true;
+    if (room) return;
 
-    await db.roomParticipant.create({
+    await db.auctionRoom.update({
+        where: {
+            id: roomId
+        },
         data: {
-            auctionRoomId: roomId,
-            userId: user.id
+            RoomParticipant: {
+                create: {
+                    userId: user.id
+                }
+            }
         }
     });
+}
 
-    if (room) return true;
+export async function createBid(roomId: string, amount: number) {
+    try {
+        const user = await currentProfile();
 
+        if (!user) return false;
+
+        await db.auctionRoom.update({
+            where: {
+                id: roomId,
+                RoomParticipant: {
+                    some: {
+                        userId: user.id
+                    }
+                }
+            },
+            data: {
+                Bid: {
+                    create: {
+                        userId: user.id,
+                        amount
+                    }
+                }
+            }
+        });
+
+    } catch (error) {
+        console.log('Falha ao criar lance -', error);
+        throw error;
+    }
 }
