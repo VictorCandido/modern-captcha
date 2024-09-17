@@ -99,7 +99,7 @@ export default function AuctionRoom({ roomId }: Props) {
                     <div className="flex items-center justify-between">
                         <div>
                             <h2 className="text-lg font-medium">Último Lance</h2>
-                            <p className="text-3xl font-bold">
+                            <p className="text-3xl font-bold" id='ultimoLance'>
                                 {Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(currentBid)}
                             </p>
                         </div>
