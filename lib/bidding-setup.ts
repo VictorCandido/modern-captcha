@@ -72,7 +72,7 @@ export async function listBidsFromAuctionRoom(roomId: string) {
 
         if (!user) return false;
 
-        return await db.bid.findMany({
+        const bids = await db.bid.findMany({
             where: {
                 auctionRoom: {
                     id: roomId,
@@ -85,24 +85,9 @@ export async function listBidsFromAuctionRoom(roomId: string) {
             }
         });
 
-        return await db.auctionRoom.findUnique({
-            where: {
-                id: roomId,
-                RoomParticipant: {
-                    some: {
-                        userId: user.id
-                    }
-                }
-            },
-            select: {
-                Bid: {
-                    select: {
-                        amount: true,
-                        userId: true
-                    }
-                }
-            }
-        });
+        if (bids && bids.length) return bids;
+
+        return [];
     } catch (error) {
         console.log('Falha ao buscar lances -', error);
         throw error;

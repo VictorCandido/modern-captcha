@@ -1,17 +1,20 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { RefreshCw } from 'lucide-react';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from "sonner";
 import { z } from 'zod';
 
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel } from '@/components/ui/form';
+import { Bid } from '@prisma/client';
 import CurrencyInput from './currency-input';
 import InvisibleReCAPTCHA from './InvisibleReCAPTCHA';
 import Table from './table';
+import { useUser } from '@clerk/nextjs';
 
 interface Props {
     roomId: string;
@@ -29,14 +32,72 @@ export default function AuctionRoom({ roomId }: Props) {
         }
     });
 
-    const [currentBid, setCurrentBid] = useState(1250);
+    const [currentBid, setCurrentBid] = useState(0);
     const [myBids, setMyBids] = useState<Array<number>>([]);
-    const [otherBids] = useState<Array<number>>([1450, 1350, 1250]);
-    const [recaptchaToken, setRecaptchaToken] = useState('');
+    const [otherBids, setOtherBids] = useState<Array<number>>([]);
+
+    const { user } = useUser();
+
+
+    useEffect(() => {
+        updateBids();
+    }, []);
+
+    async function updateBids() {
+        const bids = await listBidsFromAuctionRoom(roomId);
+
+        const myBidsData = bids ? getBidsFromActiveUser(bids) : [];
+        const otherBidsData = bids ? getBidsFromAnotherUser(bids) : [];
+        const currentBidData = bids ? getCurrentBid(bids) : 0;
+
+        setCurrentBid(currentBidData);
+        setMyBids(myBidsData);
+        setOtherBids(otherBidsData);
+    }
+
+    async function listBidsFromAuctionRoom(roomId: string) {
+        try {
+            const response = await fetch(`/api/bid/${roomId}`);
+
+            if (response.status !== 200) {
+                throw new Error(await response.text());
+            }
+
+            const bids = await response.json();
+
+            return bids;
+        } catch (error) {
+            console.error(error);
+            throw error;
+        }
+    }
+
+    function getBidsFromActiveUser(bids: Bid[]) {
+        if (!user) return [];
+
+        const myBids = bids.filter((bid) => bid.userId === user.id).map((bid) => Number(bid.amount));
+        return myBids;
+    }
+
+    function getBidsFromAnotherUser(bids: Bid[]) {
+        if (!user) return [];
+
+        const myBids = bids.filter((bid) => bid.userId !== user.id).map((bid) => Number(bid.amount));
+        return myBids;
+    }
+
+    function getCurrentBid(bids: Bid[]) {
+        if (bids.length === 0) return 0;
+
+        const latestBid = bids.reduce((prev, current) => {
+            return new Date(current.createdAt) > new Date(prev.createdAt) ? current : prev;
+        });
+
+        return Number(latestBid.amount)
+    }
 
     const fromRef = useRef<any>()
 
-    // const onSubmit = async (values: z.infer<typeof formSchema>) => {
     const onSubmit = async (newBid: string, recaptchaToken: string) => {
         try {
             // const { newBid } = values;
@@ -86,9 +147,6 @@ export default function AuctionRoom({ roomId }: Props) {
     }
 
     const handleRecaptchaResolved = async (token: any) => {
-        // setRecaptchaToken(token);
-        // fromRef.current.requestSubmit();
-
         const { newBid } = form.getValues();
         onSubmit(newBid, token);
     };
@@ -104,7 +162,7 @@ export default function AuctionRoom({ roomId }: Props) {
                                 {Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(currentBid)}
                             </p>
                         </div>
-                        <Button variant="outline" size="icon">
+                        <Button variant="outline" size="icon" onClick={updateBids}>
                             <RefreshCw className="h-4 w-4" />
                         </Button>
                     </div>
@@ -134,19 +192,6 @@ export default function AuctionRoom({ roomId }: Props) {
                             </div>
 
                             <InvisibleReCAPTCHA onResolved={handleRecaptchaResolved} />
-
-                            {/* <Button
-                                type="submit"
-                                id='newBidButton'
-                            // className="g-recaptcha" data-sitekey="6LdB3T0qAAAAAJCXAh8guDdIMLQVZMh9PKtBq-mr"
-                            >
-                                Enviar Lance
-                            </Button>
-
-                            <ReCAPTCHA
-                                sitekey="6LdB3T0qAAAAAJCXAh8guDdIMLQVZMh9PKtBq-mr" // substitua pela sua site key
-                                size="invisible"
-                            /> */}
                         </form>
                     </Form>
 
