@@ -65,3 +65,46 @@ export async function createBid(roomId: string, amount: number) {
         throw error;
     }
 }
+
+export async function listBidsFromAuctionRoom(roomId: string) {
+    try {
+        const user = await currentProfile();
+
+        if (!user) return false;
+
+        return await db.bid.findMany({
+            where: {
+                auctionRoom: {
+                    id: roomId,
+                    RoomParticipant: {
+                        some: {
+                            userId: user.id
+                        }
+                    }
+                }
+            }
+        });
+
+        return await db.auctionRoom.findUnique({
+            where: {
+                id: roomId,
+                RoomParticipant: {
+                    some: {
+                        userId: user.id
+                    }
+                }
+            },
+            select: {
+                Bid: {
+                    select: {
+                        amount: true,
+                        userId: true
+                    }
+                }
+            }
+        });
+    } catch (error) {
+        console.log('Falha ao buscar lances -', error);
+        throw error;
+    }
+}

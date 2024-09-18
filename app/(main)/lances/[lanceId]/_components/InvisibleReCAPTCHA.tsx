@@ -33,7 +33,6 @@ export default function InvisibleReCAPTCHA({ onResolved }: Props) {
                 ref={recaptchaRef}
                 sitekey="6LdB3T0qAAAAAJCXAh8guDdIMLQVZMh9PKtBq-mr" // substitua pela sua site key
                 size="invisible"
-
                 onChange={handleRecaptchaChange}
             />
         </>

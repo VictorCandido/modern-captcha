@@ -1,18 +1,17 @@
 'use client';
 
-import ReCAPTCHA from 'react-google-recaptcha';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { RefreshCw } from 'lucide-react';
 import { useRef, useState } from 'react';
-import { toast } from "sonner"
-import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
+import { toast } from "sonner";
 import { z } from 'zod';
 
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel } from '@/components/ui/form';
 import CurrencyInput from './currency-input';
-import Table from './table';
 import InvisibleReCAPTCHA from './InvisibleReCAPTCHA';
+import Table from './table';
 
 interface Props {
     roomId: string;
@@ -37,9 +36,10 @@ export default function AuctionRoom({ roomId }: Props) {
 
     const fromRef = useRef<any>()
 
-    const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    // const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    const onSubmit = async (newBid: string, recaptchaToken: string) => {
         try {
-            const { newBid } = values;
+            // const { newBid } = values;
 
             if (newBid === '') {
                 return
@@ -54,6 +54,7 @@ export default function AuctionRoom({ roomId }: Props) {
             setMyBids([...myBids, Number(unmaskCurrency(newBid))]);
             setCurrentBid(Number(unmaskCurrency(newBid)));
             form.setValue('newBid', '');
+            // setRecaptchaToken('');
         } catch (error) {
             console.log(error);
             toast.error(String(error));
@@ -85,11 +86,11 @@ export default function AuctionRoom({ roomId }: Props) {
     }
 
     const handleRecaptchaResolved = async (token: any) => {
-        setRecaptchaToken(token);
+        // setRecaptchaToken(token);
+        // fromRef.current.requestSubmit();
 
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-
-        fromRef.current.requestSubmit();
+        const { newBid } = form.getValues();
+        onSubmit(newBid, token);
     };
 
     return (
@@ -109,7 +110,12 @@ export default function AuctionRoom({ roomId }: Props) {
                     </div>
 
                     <Form {...form}>
-                        <form ref={fromRef} onSubmit={form.handleSubmit(onSubmit)} className="space-x-2 flex items-end">
+                        <form
+                            ref={fromRef}
+                            // onSubmit={form.handleSubmit(onSubmit)} 
+                            onSubmit={(e) => e.preventDefault()}
+                            className="space-x-2 flex items-end"
+                        >
                             <div className='w-full'>
                                 <FormField
                                     control={form.control}
