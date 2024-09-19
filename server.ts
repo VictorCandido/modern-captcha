@@ -33,7 +33,7 @@ app.prepare().then(() => {
         });
     });
 
-    const PORT = process.env.PORT || 3000;
+    const PORT = process.env.PORT || 443;
     server.listen(PORT, () => {
         console.log(`> Ready on http://localhost:${PORT}`);
     });
