@@ -1,9 +1,10 @@
+import { SocketProvider } from "@/components/providers/socket-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { ClerkProvider } from "@clerk/nextjs";
 import type { Metadata } from "next";
 import { Roboto } from 'next/font/google';
-import "./globals.css";
 import Head from "next/head";
+import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Modern",
@@ -29,9 +30,11 @@ export default function RootLayout({
           className={roboto.className}
           suppressHydrationWarning
         >
-          {children}
+          <SocketProvider>
+            {children}
 
-          <Toaster />
+            <Toaster />
+          </SocketProvider>
         </body>
       </html>
     </ClerkProvider>

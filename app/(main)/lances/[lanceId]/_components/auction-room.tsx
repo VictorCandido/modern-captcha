@@ -8,13 +8,15 @@ import { useForm } from 'react-hook-form';
 import { toast } from "sonner";
 import { z } from 'zod';
 
+import { useSocket } from '@/components/providers/socket-provider';
 import { Button } from "@/components/ui/button";
+import { Checkbox } from '@/components/ui/checkbox';
 import { Form, FormControl, FormField, FormItem, FormLabel } from '@/components/ui/form';
+import { useUser } from '@clerk/nextjs';
 import { Bid } from '@prisma/client';
 import CurrencyInput from './currency-input';
 import InvisibleReCAPTCHA from './InvisibleReCAPTCHA';
 import Table from './table';
-import { useUser } from '@clerk/nextjs';
 
 interface Props {
     roomId: string;
@@ -37,7 +39,13 @@ export default function AuctionRoom({ roomId }: Props) {
     const [otherBids, setOtherBids] = useState<Array<number>>([]);
 
     const { user } = useUser();
+    const { isConnected, socket } = useSocket();
 
+    useEffect(() => {
+        socket.on("receiveUpdateBids", () => {
+            updateBids();
+        });
+    }, [socket]);
 
     useEffect(() => {
         updateBids();
@@ -100,8 +108,6 @@ export default function AuctionRoom({ roomId }: Props) {
 
     const onSubmit = async (newBid: string, recaptchaToken: string) => {
         try {
-            // const { newBid } = values;
-
             if (newBid === '') {
                 return
             }
@@ -115,7 +121,8 @@ export default function AuctionRoom({ roomId }: Props) {
             setMyBids([...myBids, Number(unmaskCurrency(newBid))]);
             setCurrentBid(Number(unmaskCurrency(newBid)));
             form.setValue('newBid', '');
-            // setRecaptchaToken('');
+
+            socket.emit("sendUpdateBids");
         } catch (error) {
             console.log(error);
             toast.error(String(error));
@@ -151,6 +158,25 @@ export default function AuctionRoom({ roomId }: Props) {
         onSubmit(newBid, token);
     };
 
+    async function sendData() {
+        socket.emit("hello", "world");
+
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+
+        socket.disconnect();
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+
+        socket.connect();
+    }
+
+    function toggleSocketConnection() {
+        if (isConnected) {
+            socket.disconnect();
+        } else {
+            socket.connect();
+        }
+    }
+
     return (
         <div className="w-full h-full m-10">
             <div className="p-6">
@@ -162,9 +188,26 @@ export default function AuctionRoom({ roomId }: Props) {
                                 {Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(currentBid)}
                             </p>
                         </div>
-                        <Button variant="outline" size="icon" onClick={updateBids}>
-                            <RefreshCw className="h-4 w-4" />
-                        </Button>
+
+                        <div className='flex space-x-10'>
+                            <div className="flex items-center space-x-2">
+                                <Checkbox
+                                    id="terms"
+                                    onClick={toggleSocketConnection}
+                                    checked={isConnected}
+                                />
+                                <label
+                                    htmlFor="terms"
+                                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                >
+                                    {isConnected ? "Conectado" : "Desconectado"}
+                                </label>
+                            </div>
+
+                            <Button variant="outline" size="icon" onClick={updateBids}>
+                                <RefreshCw className="h-4 w-4" />
+                            </Button>
+                        </div>
                     </div>
 
                     <Form {...form}>
