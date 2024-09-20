@@ -53,7 +53,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponseS
     }
 
     try {
-        const { roomId, amount, token } = JSON.parse(req.body);
+        // const { roomId, amount, token } = JSON.parse(req.body);
+
+        const body = JSON.parse(req.body);
+
+        const roomId = body.roomId;
+        const amount = body.amount;
+        const token = body.token;
 
         const user = await currentProfilePages(req);
 
