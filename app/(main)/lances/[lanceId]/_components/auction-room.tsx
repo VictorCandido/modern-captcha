@@ -42,6 +42,8 @@ export default function AuctionRoom({ roomId }: Props) {
     const { isConnected, socket } = useSocket();
 
     useEffect(() => {
+        if (!socket) return
+
         socket.on("receiveUpdateBids", () => {
             updateBids();
         });
@@ -65,7 +67,7 @@ export default function AuctionRoom({ roomId }: Props) {
 
     async function listBidsFromAuctionRoom(roomId: string) {
         try {
-            const response = await fetch(`/api/bid/${roomId}`);
+            const response = await fetch(`/api/lances/${roomId}`);
 
             if (response.status !== 200) {
                 throw new Error(await response.text());
@@ -122,7 +124,7 @@ export default function AuctionRoom({ roomId }: Props) {
             setCurrentBid(Number(unmaskCurrency(newBid)));
             form.setValue('newBid', '');
 
-            socket.emit("sendUpdateBids");
+            // socket.emit("sendUpdateBids");
         } catch (error) {
             console.log(error);
             toast.error(String(error));
@@ -131,7 +133,7 @@ export default function AuctionRoom({ roomId }: Props) {
 
     async function createBid(roomId: string, amount: number, token: string) {
         try {
-            const response = await fetch(`/api/bid`, {
+            const response = await fetch(`/api/socket/bid`, {
                 method: 'POST',
                 body: JSON.stringify({ roomId, amount, token }),
             });
@@ -157,17 +159,6 @@ export default function AuctionRoom({ roomId }: Props) {
         const { newBid } = form.getValues();
         onSubmit(newBid, token);
     };
-
-    async function sendData() {
-        socket.emit("hello", "world");
-
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-
-        socket.disconnect();
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-
-        socket.connect();
-    }
 
     function toggleSocketConnection() {
         if (isConnected) {
