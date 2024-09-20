@@ -55,6 +55,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponseS
     try {
         // const { roomId, amount, token } = JSON.parse(req.body);
 
+        console.log('## req.body', req.body);
+        console.log('## req.body', JSON.parse(req.body));
+
+        console.dir(req.body, { depth: null });
+        console.dir(JSON.parse(req.body), { depth: null });
+
         const body = JSON.parse(req.body);
 
         const roomId = body.roomId;
