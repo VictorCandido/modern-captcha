@@ -59,6 +59,27 @@ export default async function handler(req: NextApiRequest, res: NextApiResponseS
 
         if (!user) return res.status(401).json({ message: 'Unauthorized' });
 
+        if (amount <= 0) return res.status(400).json({ message: 'Invalid amount' });
+
+        // Validation for amount not to be greater than any other bid in this room
+        const otherBids = await db.auctionRoom.findUnique({
+            where: {
+                id: roomId
+            },
+            select: {
+                Bid: {
+                    where: {
+                        amount: {
+                            lte: amount
+                        }
+                    }
+                }
+            }
+        });
+
+
+        if (otherBids?.Bid?.length) return res.status(400).json({ message: 'Invalid amount' });
+
         const bid = await db.auctionRoom.update({
             where: {
                 id: roomId,
