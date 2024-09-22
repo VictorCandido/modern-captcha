@@ -11,8 +11,9 @@ interface Props {
 export default function RoomCard({ id, name }: Props) {
     const { push } = useRouter();
 
-    function handleAccessRoom(roomId: string) {
-        push(`/lances/${roomId}`);
+    function handleAccessRoom(roomId: string, captcha: boolean) {
+        const url = `/lances${!captcha ? '-sem-captcha' : ''}/${roomId}`;
+        push(url);
     }
 
     return (
@@ -20,8 +21,9 @@ export default function RoomCard({ id, name }: Props) {
             <CardHeader>
                 <CardTitle>{name}</CardTitle>
             </CardHeader>
-            <CardContent>
-                <Button onClick={() => handleAccessRoom(id)}>Acessar</Button>
+            <CardContent className="flex gap-4">
+                <Button onClick={() => handleAccessRoom(id, true)}>Acessar com Captcha</Button>
+                <Button onClick={() => handleAccessRoom(id, false)}>Acessar sem Captcha</Button>
             </CardContent>
         </Card>
     );
