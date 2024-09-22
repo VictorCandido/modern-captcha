@@ -19,3 +19,13 @@ export async function createAuctionRoom(nome: string) {
         throw error;
     }
 }
+
+export async function deleteAuctionRoom(id: string) {
+    try {
+        const auctionRoom = await db.auctionRoom.delete({ where: { id } });
+        return auctionRoom;
+    } catch (error) {
+        console.log('Falha ao deletar auctionRooms -', error);
+        throw error;
+    }
+}

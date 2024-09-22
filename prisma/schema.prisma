@@ -39,10 +39,10 @@ model AuctionRoom {
 model RoomParticipant {
   id String @id @default(uuid())
 
-  user   User   @relation(fields: [userId], references: [id])
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId String
 
-  auctionRoom   AuctionRoom @relation(fields: [auctionRoomId], references: [id])
+  auctionRoom   AuctionRoom @relation(fields: [auctionRoomId], references: [id], onDelete: Cascade)
   auctionRoomId String
 
   createdAt DateTime @default(now())
@@ -53,7 +53,7 @@ model Bid {
   id     String  @id @default(uuid())
   amount Decimal
 
-  auctionRoom   AuctionRoom @relation(fields: [auctionRoomId], references: [id])
+  auctionRoom   AuctionRoom @relation(fields: [auctionRoomId], references: [id], onDelete: Cascade)
   auctionRoomId String
 
   user   User   @relation(fields: [userId], references: [id])
