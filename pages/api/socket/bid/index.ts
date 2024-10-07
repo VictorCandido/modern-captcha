@@ -103,6 +103,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponseS
             }
         });
 
+        const randomTime = getRandomTime();
+        await new Promise(resolve => setTimeout(resolve, randomTime));
+
         res?.socket?.server?.io.emit('receiveUpdateBids');
 
         return res.status(200).json(bid);
@@ -111,4 +114,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponseS
         console.log('Falha ao criar lance -', error);
         return res.status(500).json({ message: 'Internal Error' });
     }
+}
+
+function getRandomTime() {
+    return Math.floor(Math.random() * (600 - 300 + 1) + 300);
 }
