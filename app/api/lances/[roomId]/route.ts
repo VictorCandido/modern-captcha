@@ -51,5 +51,5 @@ export async function DELETE(req: Request, { params }: { params: { roomId: strin
 }
 
 function getRandomTime() {
-    return Math.floor(Math.random() * (600 - 300 + 1) + 300);
+    return Math.floor(Math.random() * (500 - 200 + 1) + 200);
 }
