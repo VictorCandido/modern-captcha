@@ -16,6 +16,10 @@ export async function GET(req: Request, { params }: { params: { roomId: string }
 
     try {
         const bids = await listBidsFromAuctionRoom(params.roomId);
+
+        const randomTime = getRandomTime();
+        await new Promise(resolve => setTimeout(resolve, randomTime));
+
         return NextResponse.json(bids);
 
     } catch (error) {
@@ -44,4 +48,8 @@ export async function DELETE(req: Request, { params }: { params: { roomId: strin
         console.log('Falha ao apagar lances -', error);
         return new NextResponse('Internal Error', { status: 500 });
     }
+}
+
+function getRandomTime() {
+    return Math.floor(Math.random() * (600 - 300 + 1) + 300);
 }
