@@ -93,3 +93,32 @@ export async function listBidsFromAuctionRoom(roomId: string) {
         throw error;
     }
 }
+
+export async function listLasBidFromAuctionRoom(roomId: string) {
+    try {
+        const user = await currentProfile();
+
+        if (!user) return false;
+
+        const lastBid = await db.bid.findFirst({
+            where: {
+                auctionRoom: {
+                    id: roomId,
+                    RoomParticipant: {
+                        some: {
+                            userId: user.id
+                        }
+                    }
+                }
+            },
+            orderBy: {
+                createdAt: 'desc'
+            }
+        });
+
+        return lastBid;
+    } catch (error) {
+        console.log('Falha ao buscar lances -', error);
+        throw error;
+    }
+}
