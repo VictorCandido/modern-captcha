@@ -64,6 +64,7 @@ export default function Component() {
                                 <Label htmlFor="username">Usuário</Label>
                                 <Input
                                     id="username"
+                                    name="username"
                                     placeholder="Digite seu nome de usuário"
                                     value={username}
                                     onChange={(e) => setusername(e.target.value)}
@@ -73,6 +74,7 @@ export default function Component() {
                                 <Label htmlFor="password">Senha</Label>
                                 <Input
                                     id="password"
+                                    name="password"
                                     type="password"
                                     placeholder="Digite sua senha"
                                     value={password}
@@ -83,7 +85,7 @@ export default function Component() {
                     </form>
                 </CardContent>
                 <CardFooter className="flex flex-col space-y-4">
-                    <Button id="login" className="w-full" onClick={handleWithLogin}>Entrar</Button>
+                    <Button name="login" className="w-full" onClick={handleWithLogin}>Entrar</Button>
                     <div className="text-sm text-center">
                         Não tem uma conta?{" "}
                         <Link href="/sign-up" className="text-primary hover:underline">
